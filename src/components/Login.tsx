@@ -2,14 +2,20 @@
 import { signInWithPopup } from "firebase/auth";
 import { auth, provider } from "../firebase-config";
 import logo from "../assets/love.png";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const Login = () => {
+  const navigate = useNavigate(); // Initialize useNavigate
+
   const signInWithGoogle = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
       console.log(result.user); // You can handle the user information here
+      
+      // Navigate to the Home page after successful login
+      navigate("/home");
     } catch (error) {
-      console.error(error);
+      console.error("Error logging in:", error);
     }
   };
 
