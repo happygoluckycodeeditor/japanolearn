@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Home from './components/Home';
 import Lessons from './components/Lessons';
 import Exercises from './components/Exercises';
@@ -7,11 +7,13 @@ import Dictionary from './components/Dictionary';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 
-
 export default function App() {
+  const location = useLocation();
+
   return (
     <div>
-      <Navbar /> {/* Add Navbar here */}
+      {/* Conditionally render the Navbar only if not on the login page */}
+      {location.pathname !== '/' && <Navbar />}
       <Routes>
         <Route path="/" element={<Login />} />
         <Route
