@@ -1,14 +1,48 @@
-//import { useState } from 'react'
-//import reactLogo from './assets/react.svg'
-//import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route } from 'react-router-dom';
+import Home from './components/Home';
+import Lessons from './components/Lessons';
+import Exercises from './components/Exercises';
+import Login from './components/Login';
+import PrivateRoute from './components/PrivateRoute';
+import Dictionary from './components/Dictionary';
+
 
 export default function App() {
   return (
-    <div className="text-center p-6">
-      <h1 className="text-4xl font-bold">JapanoLearn</h1>
-      <button className="btn btn-primary mt-4">Get Started</button>
-    </div>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route
+        path="/home"
+        element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/lessons"
+        element={
+          <PrivateRoute>
+            <Lessons />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/exercises"
+        element={
+          <PrivateRoute>
+            <Exercises />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/dictionary"
+        element={
+          <PrivateRoute>
+            <Dictionary />
+          </PrivateRoute>
+        }
+      />
+    </Routes>
   );
 }
-
