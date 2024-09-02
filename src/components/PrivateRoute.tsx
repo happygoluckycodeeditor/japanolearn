@@ -7,7 +7,11 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
   const [user, loading] = useAuthState(auth);
 
   if (loading) {
-    return <div>Loading...</div>; // You can replace this with a better loading indicator
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <span className="loading loading-ring loading-lg"></span>
+      </div>
+    );
   }
 
   if (!user) {
