@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Dictionary from './components/Dictionary';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
+import LessonPage from './components/LessonPage';
 
 export default function App() {
   const location = useLocation();
@@ -29,6 +30,14 @@ export default function App() {
           element={
             <PrivateRoute>
               <Lessons />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/lessons/:id"
+          element={
+            <PrivateRoute>
+              <LessonPage />
             </PrivateRoute>
           }
         />
