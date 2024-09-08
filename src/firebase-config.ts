@@ -2,8 +2,9 @@ import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
-// Your web app's Firebase configuration
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBLnp5i6VET-aRxafItsIwAyZQYcPoB7MA",
   authDomain: "japanolearn-b696a.firebaseapp.com",
@@ -14,6 +15,9 @@ const firebaseConfig = {
   measurementId: "G-1BM1J723N3"
 };
 
+// ReCAPTCHA Enterprise site key
+const RECAPTCHA_ENTERPRISE_SITE_KEY = "6LfsWTYqAAAAAOYEWfzHrA0HuAkfWTBmNqcZV7hK";
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
@@ -21,4 +25,9 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const db = getFirestore(app); // Initialize Firestore
 
-export { auth, provider, analytics, db };
+// Initialize App Check with ReCAPTCHA Enterprise
+initializeAppCheck(app, {
+  provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
+});
+
+export { auth, provider, analytics, db, app };

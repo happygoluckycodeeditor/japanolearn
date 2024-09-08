@@ -2,32 +2,11 @@ import algoliasearch from 'algoliasearch/lite';
 import instantsearch from 'instantsearch.js';
 import { hits, configure } from 'instantsearch.js/es/widgets';
 import React, { useEffect, useRef, useState } from 'react';
-import { initializeApp } from "firebase/app";
+import { app } from '../firebase-config'; // Import initialized Firebase app
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai-preview";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 
-// Firebase config with ReCAPTCHA Enterprise Site Key
-export const firebaseConfig = {
-  apiKey: "AIzaSyBLnp5i6VET-aRxafItsIwAyZQYcPoB7MA",
-  authDomain: "japanolearn-b696a.firebaseapp.com",
-  projectId: "japanolearn-b696a",
-  storageBucket: "japanolearn-b696a.appspot.com",
-  messagingSenderId: "371685326092",
-  appId: "1:371685326092:web:5f6d44da5951209ea9dd29",
-  measurementId: "G-1BM1J723N3"
-};
-
-export const RECAPTCHA_ENTERPRISE_SITE_KEY = "6LfsWTYqAAAAAOYEWfzHrA0HuAkfWTBmNqcZV7hK";
-
-// Initialize Firebase and Vertex AI
-const firebaseApp = initializeApp(firebaseConfig);
-
-// Initialize App Check with ReCAPTCHA Enterprise
-initializeAppCheck(firebaseApp, {
-  provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
-});
-
-const vertexAI = getVertexAI(firebaseApp);
+// Initialize Vertex AI
+const vertexAI = getVertexAI(app);
 const model = getGenerativeModel(vertexAI, {
   model: "gemini-1.5-flash",
   systemInstruction: "You are a Japanese-English dictionary. Provide Kanji, readings, Romanization, and 2 example sentences for words."
@@ -73,6 +52,7 @@ const Dictionary = () => {
 
     search.current.start();
   }, []);
+
   // Function to call Vertex AI with the search term
   const getGenerativeContent = async (query) => {
     setIsLoading(true);
