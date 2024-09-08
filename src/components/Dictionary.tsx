@@ -1,5 +1,5 @@
 import algoliasearch from 'algoliasearch/lite';
-import instantsearch from 'instantsearch.js';
+import instantsearch, { InstantSearch } from 'instantsearch.js';
 import { hits, configure } from 'instantsearch.js/es/widgets';
 import React, { useEffect, useRef, useState } from 'react';
 import { app } from '../firebase-config'; // Import initialized Firebase app
@@ -9,16 +9,16 @@ import { getVertexAI, getGenerativeModel } from "firebase/vertexai-preview";
 const vertexAI = getVertexAI(app);
 const model = getGenerativeModel(vertexAI, {
   model: "gemini-1.5-flash",
-  systemInstruction: "You are a Japanese-English dictionary. Provide the Kanji, followed by its explantion or meaning, then readings, Romanization, and 2 example sentences for words."
+  systemInstruction: "You are a Japanese-English dictionary. Provide the Kanji, followed by its explanation or meaning, then readings, Romanization, and 2 example sentences for words."
 });
 
 // Algolia search client setup
 const searchClient = algoliasearch('ALW8ZKQXQA', '0696c4fe6209cfacfd34dcdb1174d2b2');
 
 const Dictionary = () => {
-  const search = useRef(null);
-  const [aiResponse, setAiResponse] = useState("");  // State to store AI response
-  const [isLoading, setIsLoading] = useState(false);  // Loading state for AI response
+  const search = useRef<InstantSearch | null>(null);
+  const [aiResponse, setAiResponse] = useState<string>("");  // State to store AI response
+  const [isLoading, setIsLoading] = useState<boolean>(false);  // Loading state for AI response
 
   useEffect(() => {
     // Initialize Algolia InstantSearch without the searchBox widget
@@ -27,7 +27,7 @@ const Dictionary = () => {
       searchClient,
     });
 
-    search.current.addWidgets([
+    search.current?.addWidgets([
       // Hits widget to display Algolia results
       hits({
         container: '#hits',
@@ -50,10 +50,11 @@ const Dictionary = () => {
       }),
     ]);
 
-    search.current.start();
+    search.current?.start();
   }, []);
+
   // Function to call Vertex AI with the search term
-  const getGenerativeContent = async (query) => {
+  const getGenerativeContent = async (query: string) => {
     setIsLoading(true);
     try {
       const result = await model.generateContent(query);
@@ -67,23 +68,22 @@ const Dictionary = () => {
     }
   };
 
-  // Debounce function to limit the number of requests sent to Vertex AI
-  let timeoutId;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-  const handleSubmit = (event) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const query = event.target.querySelector('input')?.value;
+    const query = (event.target as HTMLFormElement).querySelector('input')?.value;
 
-    // Clear any previously set timeout
     if (timeoutId) clearTimeout(timeoutId);
 
     // Set a timeout to delay the execution of the search
     timeoutId = setTimeout(() => {
-      // Trigger Algolia search
-      search.current.helper.setQuery(query).search();
+      if (search.current?.helper) {
+        search.current.helper.setQuery(query!).search();
+      }
 
       // Trigger Vertex AI for generating content
-      getGenerativeContent(query);
+      getGenerativeContent(query!);
     }, 1000); // Delay by 1 second to avoid sending too many requests
   };
 
