@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { app } from '../firebase-config'; // Import initialized Firebase app
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai-preview";
 import ReactMarkdown from 'react-markdown';
+import { toHiragana } from 'wanakana';  // Import wanakana for transliteration
 
 // Initialize Vertex AI
 const vertexAI = getVertexAI(app);
@@ -85,9 +86,12 @@ const Dictionary = () => {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    const query = (event.target as HTMLFormElement).querySelector('input')?.value;
+    let query = (event.target as HTMLFormElement).querySelector('input')?.value;
 
     if (query) {
+      // Convert Romaji to Hiragana
+      query = toHiragana(query);
+
       if (timeoutId) clearTimeout(timeoutId);
 
       // Set a timeout to delay the execution of the search
@@ -98,7 +102,7 @@ const Dictionary = () => {
 
         // Trigger Vertex AI for generating content
         getGenerativeContent(query!);
-      }, 1000); // Delay by 1 second to avoid sending too many requests
+      }, 3000); // Delay by 1 second to avoid sending too many requests
     }
   };
 
