@@ -4,6 +4,7 @@ import { hits, configure } from 'instantsearch.js/es/widgets';
 import React, { useEffect, useRef, useState } from 'react';
 import { app } from '../firebase-config'; // Import initialized Firebase app
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai-preview";
+import ReactMarkdown from 'react-markdown';
 
 // Initialize Vertex AI
 const vertexAI = getVertexAI(app);
@@ -14,6 +15,9 @@ const model = getGenerativeModel(vertexAI, {
 
 // Algolia search client setup
 const searchClient = algoliasearch('ALW8ZKQXQA', '0696c4fe6209cfacfd34dcdb1174d2b2');
+
+// Cache object to store previous AI responses
+const aiCache: { [key: string]: string } = {};
 
 const Dictionary = () => {
   const search = useRef<InstantSearch | null>(null);
@@ -53,12 +57,21 @@ const Dictionary = () => {
     search.current?.start();
   }, []);
 
-  // Function to call Vertex AI with the search term
+  // Function to call Vertex AI with the search term and implement caching
   const getGenerativeContent = async (query: string) => {
     setIsLoading(true);
+
+    // Check cache first
+    if (aiCache[query]) {
+      setAiResponse(aiCache[query]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await model.generateContent(query);
       const responseText = await result.response.text();  // Await response text
+      aiCache[query] = responseText;  // Cache the AI response
       setAiResponse(responseText);  // Set AI response to state
     } catch (error) {
       console.error("Error generating content from Vertex AI:", error);
@@ -74,17 +87,19 @@ const Dictionary = () => {
     event.preventDefault();
     const query = (event.target as HTMLFormElement).querySelector('input')?.value;
 
-    if (timeoutId) clearTimeout(timeoutId);
+    if (query) {
+      if (timeoutId) clearTimeout(timeoutId);
 
-    // Set a timeout to delay the execution of the search
-    timeoutId = setTimeout(() => {
-      if (search.current?.helper) {
-        search.current.helper.setQuery(query!).search();
-      }
+      // Set a timeout to delay the execution of the search
+      timeoutId = setTimeout(() => {
+        if (search.current?.helper) {
+          search.current.helper.setQuery(query!).search();
+        }
 
-      // Trigger Vertex AI for generating content
-      getGenerativeContent(query!);
-    }, 1000); // Delay by 1 second to avoid sending too many requests
+        // Trigger Vertex AI for generating content
+        getGenerativeContent(query!);
+      }, 1000); // Delay by 1 second to avoid sending too many requests
+    }
   };
 
   return (
@@ -105,19 +120,31 @@ const Dictionary = () => {
         <button type="submit" className="btn btn-primary">Search</button>
       </form>
 
-      {/* Display Loading State */}
-      {isLoading && <p>Loading AI content...</p>}
+      {/* JapanoAssistant Response (AI-generated content) */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold mb-2">Japanolearn's Response</h2>
+        {isLoading ? (
+          <div className="flex flex-col gap-2">
+            <div className="skeleton h-4 w-1/2"></div>
+            <div className="skeleton h-4 w-full"></div>
+            <div className="skeleton h-4 w-full"></div>
+          </div>
+        ) : (
+          aiResponse ? (
+            <ReactMarkdown className="whitespace-pre-wrap p-4 bg-gray-100 rounded-lg">
+              {aiResponse}
+            </ReactMarkdown>
+          ) : (
+            <p className="text-gray-500">
+              Put the words you want to search and Japanolearn will give you an AI-assisted explanation of the thing.
+            </p>
+          )
+        )}
+      </div>
 
-      {/* Display Algolia Search Results */}
+      {/* Dictionary Search Results */}
+      <h2 className="text-2xl font-semibold mb-4">Dictionary search results:</h2>
       <div id="hits"></div>
-
-      {/* Display AI-Generated Response */}
-      {aiResponse && (
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <h2 className="text-2xl font-semibold mb-2">AI Generated Info:</h2>
-          <pre className="whitespace-pre-wrap">{aiResponse}</pre>
-        </div>
-      )}
     </div>
   );
 };
