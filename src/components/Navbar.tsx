@@ -1,4 +1,4 @@
-//import React from "react";
+// components/Navbar.tsx
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebase-config";
 
@@ -44,6 +44,7 @@ const Navbar = () => {
             </li>
             <li><a href="/exercises">Exercises</a></li>
             <li><a href="/dictionary">Dictionary</a></li>
+            <li><a href="/analytics">Analytics</a></li> {/* Added Analytics link */}
           </ul>
         </div>
         <a href="/home" className="btn btn-ghost text-xl">JapanoLearn</a>
@@ -61,6 +62,7 @@ const Navbar = () => {
           </li>
           <li><a href="/exercises">Exercises</a></li>
           <li><a href="/dictionary">Dictionary</a></li>
+          <li><a href="/analytics">Analytics</a></li> {/* Added Analytics link */}
         </ul>
       </div>
       <div className="navbar-end">

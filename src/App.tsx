@@ -9,6 +9,7 @@ import Dictionary from './components/Dictionary';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import LessonPage from './components/LessonPage';
+import Analytics from './components/Analytics';
 import { auth } from './firebase-config';
 
 export default function App() {
@@ -97,6 +98,14 @@ export default function App() {
               <Dictionary />
             </PrivateRoute>
           }
+        />
+        <Route
+        path="/analytics"
+        element={
+          <PrivateRoute>
+            <Analytics />
+          </PrivateRoute>
+        }
         />
       </Routes>
     </div>
