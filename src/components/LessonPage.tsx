@@ -24,6 +24,13 @@ const LessonPage = () => {
   const [testCompleted, setTestCompleted] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
   const [score, setScore] = useState<number | null>(null);
+
+  // Time spent state
+  const [days, setDays] = useState(0);
+  const [hours, setHours] = useState(0);
+  const [minutes, setMinutes] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -50,6 +57,34 @@ const LessonPage = () => {
     fetchLesson();
     fetchQuiz();
   }, [id]);
+
+  useEffect(() => {
+    // Increment the time spent every second
+    const timeInterval = setInterval(() => {
+      setSeconds((prevSeconds) => {
+        if (prevSeconds + 1 === 60) {
+          setMinutes((prevMinutes) => {
+            if (prevMinutes + 1 === 60) {
+              setHours((prevHours) => {
+                if (prevHours + 1 === 24) {
+                  setDays((prevDays) => prevDays + 1);
+                  return 0;
+                }
+                return prevHours + 1;
+              });
+              return 0;
+            }
+            return prevMinutes + 1;
+          });
+          return 0;
+        }
+        return prevSeconds + 1;
+      });
+    }, 1000);
+
+    // Clear the interval on component unmount
+    return () => clearInterval(timeInterval);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -228,29 +263,64 @@ const LessonPage = () => {
         </div>
       </div>
 
-      {/* Right side: Lesson progress */}
-      <div
-        className="card bg-gray-100 shadow-lg p-6 sticky top-5 flex items-center justify-center"
-        style={{ height: "fit-content" }}
-      >
-        <h2 className="text-2xl font-semibold mb-4 text-center">Lesson Progress</h2>
-        <div
-          className="radial-progress"
-          style={
-            {
-              "--value": progress,
-              "--size": "12rem",
-              "--thickness": "2rem",
-              transition: "stroke-dashoffset 0.5s ease-in-out",
-            } as React.CSSProperties
-          }
-          role="progressbar"
-        >
-          {Math.round(progress)}%
+      {/* Right side: Lesson progress and time spent */}
+      <div className="sticky pt-6 top-5 flex flex-col gap-4 max-h-[calc(100vh-20px)] overflow-auto">
+        {/* Lesson Progress Card */}
+        <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col" style={{ height: "fit-content" }}>
+          <h2 className="text-2xl font-semibold mb-4 text-center">Lesson Progress</h2>
+          <div
+            className="radial-progress"
+            style={
+              {
+                "--value": progress,
+                "--size": "12rem",
+                "--thickness": "2rem",
+                transition: "stroke-dashoffset 0.5s ease-in-out",
+              } as React.CSSProperties
+            }
+            role="progressbar"
+          >
+            {Math.round(progress)}%
+          </div>
+        </div>
+
+        {/* Time Spent Card */}
+        <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
+          <h2 className="text-2xl font-semibold mb-4 text-center">Time spent on this lesson</h2>
+          <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
+            <div className="flex flex-col">
+              <span className="countdown font-mono text-5xl">
+
+                <span style={{ "--value": days } as React.CSSProperties}></span>
+              </span>
+              days
+            </div>
+            <div className="flex flex-col">
+              <span className="countdown font-mono text-5xl">
+
+                <span style={{ "--value": hours } as React.CSSProperties}></span>
+              </span>
+              hours
+            </div>
+            <div className="flex flex-col">
+              <span className="countdown font-mono text-5xl">
+
+                <span style={{ "--value": minutes } as React.CSSProperties}></span>
+              </span>
+              min
+            </div>
+            <div className="flex flex-col">
+              <span className="countdown font-mono text-5xl">
+
+                <span style={{ "--value": seconds } as React.CSSProperties}></span>
+              </span>
+              sec
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-};
 
+};
 export default LessonPage;
