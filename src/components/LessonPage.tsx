@@ -10,13 +10,20 @@ interface Lesson {
   content: string;
 }
 
+interface Quiz {
+  questions: { question: string; options: string[]; answer: string }[];
+}
+
 const LessonPage = () => {
   const { id } = useParams<{ id: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [videoWatched, setVideoWatched] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
+  const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
+  const [score, setScore] = useState<number | null>(null);
   const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -30,7 +37,18 @@ const LessonPage = () => {
         }
       }
     };
+
+    const fetchQuiz = async () => {
+      if (id) {
+        const quizDoc = await getDoc(doc(db, "quizzes", id));
+        if (quizDoc.exists()) {
+          setQuiz(quizDoc.data() as Quiz);
+        }
+      }
+    };
+
     fetchLesson();
+    fetchQuiz();
   }, [id]);
 
   useEffect(() => {
@@ -47,6 +65,7 @@ const LessonPage = () => {
 
   const onStateChange: YouTubeProps["onStateChange"] = (event) => {
     if (event.data === 1 && player && !intervalRef.current) {
+      // Video is playing
       const duration = player.getDuration();
       intervalRef.current = window.setInterval(() => {
         if (player) {
@@ -64,6 +83,7 @@ const LessonPage = () => {
         }
       }, 1000);
     } else if (event.data !== 1 && intervalRef.current !== null) {
+      // Video is paused or stopped
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
@@ -92,16 +112,30 @@ const LessonPage = () => {
     }, duration / totalFrames);
   };
 
+  const handleAnswerSelection = (questionIndex: number, selectedOption: string) => {
+    setSelectedAnswers((prev) => ({
+      ...prev,
+      [questionIndex]: selectedOption,
+    }));
+  };
+
   const handleTestCompletion = () => {
-    if (!testCompleted) {
-      setTestCompleted(true);
-      updateProgress();
+    let correctCount = 0;
+    if (quiz) {
+      quiz.questions.forEach((q, index) => {
+        if (selectedAnswers[index] === q.answer) {
+          correctCount++;
+        }
+      });
     }
+    setScore(correctCount);
+    setTestCompleted(true);
+    updateProgress();
   };
 
   useEffect(() => {
     updateProgress();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoWatched, testCompleted]);
 
   if (!lesson) {
@@ -131,15 +165,67 @@ const LessonPage = () => {
         </div>
         <p className="mb-6">{lesson.content}</p>
 
-        {/* Test Button */}
-        <button
-          className="btn btn-primary btn-lg"
-          onClick={handleTestCompletion}
-          // Removed the disabled prop
-          // disabled={!videoWatched}
-        >
-          {testCompleted ? "Test Completed" : "Start the Test"}
-        </button>
+        {/* Quiz Section */}
+        <div className="collapse bg-base-200 mb-6">
+          <input type="checkbox" />
+          <div className="collapse-title text-xl font-medium">
+            Click here to start the quiz
+          </div>
+          <div className="collapse-content">
+            {quiz ? (
+              <div>
+                {quiz.questions.map((q, index) => (
+                  <div key={index} className="mb-4">
+                    <h4 className="font-semibold">{q.question}</h4>
+                    <div className="flex flex-col">
+                      {q.options.map((option, i) => {
+                        const isCorrect = testCompleted && option === q.answer;
+                        const isSelected = selectedAnswers[index] === option;
+                        return (
+                          <label
+                            key={i}
+                            className={`flex items-center space-x-2 mb-2 border ${
+                              testCompleted
+                                ? isCorrect
+                                  ? "border-green-400"
+                                  : isSelected
+                                  ? "border-red-400"
+                                  : ""
+                                : ""
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`question-${index}`}
+                              className="radio"
+                              onChange={() => handleAnswerSelection(index, option)}
+                              disabled={testCompleted} // Disable input after test completion
+                            />
+                            <span>{option}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                <button
+                  className="btn btn-primary mt-4"
+                  onClick={handleTestCompletion}
+                  disabled={testCompleted}
+                >
+                  Submit Quiz
+                </button>
+                {testCompleted && score !== null && (
+                  <p className="mt-4 text-lg font-semibold">
+                    You scored {score} out of {quiz.questions.length}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p>Loading quiz...</p>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Right side: Lesson progress */}
