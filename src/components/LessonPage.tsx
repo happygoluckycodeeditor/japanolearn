@@ -52,8 +52,10 @@ const LessonPage = () => {
         if (player) {
           const currentTime = player.getCurrentTime();
           if (currentTime >= 0.8 * duration) {
-            setVideoWatched(true);
-            animateProgress(50); // Animate progress to 50% after watching 80% of the video
+            if (!videoWatched) {
+              setVideoWatched(true);
+              updateProgress();
+            }
             if (intervalRef.current !== null) {
               clearInterval(intervalRef.current);
               intervalRef.current = null;
@@ -61,10 +63,15 @@ const LessonPage = () => {
           }
         }
       }, 1000);
-    } else if (intervalRef.current !== null) {
+    } else if (event.data !== 1 && intervalRef.current !== null) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
+  };
+
+  const updateProgress = () => {
+    const targetProgress = (videoWatched ? 50 : 0) + (testCompleted ? 50 : 0);
+    animateProgress(targetProgress);
   };
 
   const animateProgress = (targetValue: number) => {
@@ -86,9 +93,16 @@ const LessonPage = () => {
   };
 
   const handleTestCompletion = () => {
-    setTestCompleted(true);
-    animateProgress(100); // Animate progress to 100% after completing the test
+    if (!testCompleted) {
+      setTestCompleted(true);
+      updateProgress();
+    }
   };
+
+  useEffect(() => {
+    updateProgress();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoWatched, testCompleted]);
 
   if (!lesson) {
     return <div>Loading...</div>;
@@ -121,7 +135,8 @@ const LessonPage = () => {
         <button
           className="btn btn-primary btn-lg"
           onClick={handleTestCompletion}
-          disabled={!videoWatched}
+          // Removed the disabled prop
+          // disabled={!videoWatched}
         >
           {testCompleted ? "Test Completed" : "Start the Test"}
         </button>
@@ -140,7 +155,7 @@ const LessonPage = () => {
               "--value": progress,
               "--size": "12rem",
               "--thickness": "2rem",
-              transition: "stroke-dashoffset 0.5s ease-in-out", // Optional CSS transition
+              transition: "stroke-dashoffset 0.5s ease-in-out",
             } as React.CSSProperties
           }
           role="progressbar"
@@ -151,4 +166,5 @@ const LessonPage = () => {
     </div>
   );
 };
+
 export default LessonPage;
