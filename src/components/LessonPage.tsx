@@ -39,6 +39,7 @@ const LessonPage = () => {
   const [testCompleted, setTestCompleted] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
   const [score, setScore] = useState<number | null>(null);
+  const [lastUpdateTime, setLastUpdateTime] = useState<number>(Date.now());
 
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
@@ -84,6 +85,7 @@ const LessonPage = () => {
           setHours(hours);
           setMinutes(minutes);
           setSeconds(seconds);
+          setLastUpdateTime(Date.now()); // Set the last update time
         } else {
           const initialStats: UserLessonStats = {
             lessonProgress: 0,
@@ -161,8 +163,9 @@ const LessonPage = () => {
 
   const updateTimeSpent = async () => {
     if (auth.currentUser && id && userLessonStats) {
-      const newTotalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
-      const updatedTimeSpent = userLessonStats.timeSpent + newTotalSeconds;
+      const currentTime = Date.now();
+      const timeDifference = Math.floor((currentTime - lastUpdateTime) / 1000); // Convert to seconds
+      const updatedTimeSpent = userLessonStats.timeSpent + timeDifference;
       try {
         await updateDoc(doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`), {
           timeSpent: updatedTimeSpent,
@@ -171,6 +174,7 @@ const LessonPage = () => {
         setUserLessonStats((prev) =>
           prev ? { ...prev, timeSpent: updatedTimeSpent } : null
         );
+        setLastUpdateTime(currentTime);
         console.log("Time spent updated successfully");
       } catch (error) {
         console.error("Error updating time spent:", error);
