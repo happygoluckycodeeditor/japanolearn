@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase-config";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { db, auth } from "../firebase-config";
+import { onAuthStateChanged } from "firebase/auth";
 import YouTube, { YouTubeProps, YouTubePlayer } from "react-youtube";
 
 interface Lesson {
@@ -12,6 +13,12 @@ interface Lesson {
 
 interface Quiz {
   questions: { question: string; options: string[]; answer: string }[];
+}
+
+interface UserLessonStats {
+  lessonProgress: number;
+  timeSpent: number;
+  maxQuizScore: number;
 }
 
 const LessonPage = () => {
@@ -25,11 +32,12 @@ const LessonPage = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: number]: string }>({});
   const [score, setScore] = useState<number | null>(null);
 
-  // Time spent state
   const [days, setDays] = useState(0);
   const [hours, setHours] = useState(0);
   const [minutes, setMinutes] = useState(0);
   const [seconds, setSeconds] = useState(0);
+
+  const [userLessonStats, setUserLessonStats] = useState<UserLessonStats | null>(null);
 
   const intervalRef = useRef<number | null>(null);
 
@@ -54,12 +62,46 @@ const LessonPage = () => {
       }
     };
 
+    const fetchUserLessonStats = async (userUid: string) => {
+      if (id && userUid) {
+        const statsDoc = await getDoc(doc(db, "userLessonStats", `${userUid}_${id}`));
+        if (statsDoc.exists()) {
+          const stats = statsDoc.data() as UserLessonStats;
+          setUserLessonStats(stats);
+          setProgress(stats.lessonProgress);
+          setVideoWatched(stats.lessonProgress >= 50);
+          setTestCompleted(stats.lessonProgress === 100);
+        } else {
+          const initialStats: UserLessonStats = {
+            lessonProgress: 0,
+            timeSpent: 0,
+            maxQuizScore: 0,
+          };
+          await setDoc(
+            doc(db, "userLessonStats", `${userUid}_${id}`),
+            initialStats,
+            { merge: true }
+          );
+          setUserLessonStats(initialStats);
+        }
+      }
+    };
+
     fetchLesson();
     fetchQuiz();
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        fetchUserLessonStats(user.uid);
+      } else {
+        setUserLessonStats(null);
+      }
+    });
+
+    return () => unsubscribe();
   }, [id]);
 
   useEffect(() => {
-    // Increment the time spent every second
     const timeInterval = setInterval(() => {
       setSeconds((prevSeconds) => {
         if (prevSeconds + 1 === 60) {
@@ -82,66 +124,99 @@ const LessonPage = () => {
       });
     }, 1000);
 
-    // Clear the interval on component unmount
-    return () => clearInterval(timeInterval);
+    return () => {
+      clearInterval(timeInterval);
+      updateTimeSpent();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    return () => {
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+  const updateTimeSpent = async () => {
+    if (auth.currentUser && id) {
+      const totalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
+      await updateDoc(doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`), {
+        timeSpent: totalSeconds,
+        lastAccessed: new Date(),
+      });
+      setUserLessonStats((prev) =>
+        prev ? { ...prev, timeSpent: totalSeconds } : null
+      );
+    }
+  };
 
   const onReady: YouTubeProps["onReady"] = (event) => {
     setPlayer(event.target);
   };
 
   const onStateChange: YouTubeProps["onStateChange"] = (event) => {
-    if (event.data === 1 && player && !intervalRef.current) {
-      // Video is playing
-      const duration = player.getDuration();
-      intervalRef.current = window.setInterval(() => {
-        if (player) {
-          const currentTime = player.getCurrentTime();
-          if (currentTime >= 0.8 * duration) {
-            if (!videoWatched) {
-              setVideoWatched(true);
-              updateProgress();
-            }
-            if (intervalRef.current !== null) {
-              clearInterval(intervalRef.current);
-              intervalRef.current = null;
-            }
-          }
+    if (event.data === YouTube.PlayerState.PLAYING && player) {
+      const checkProgress = () => {
+        const currentTime = player.getCurrentTime();
+        const duration = player.getDuration();
+        if (currentTime / duration >= 0.8 && !videoWatched) {
+          setVideoWatched(true);
+          updateProgress();
+          clearInterval(intervalRef.current!);
         }
-      }, 1000);
-    } else if (event.data !== 1 && intervalRef.current !== null) {
-      // Video is paused or stopped
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+      };
+      intervalRef.current = window.setInterval(checkProgress, 1000);
+    } else if (
+      event.data === YouTube.PlayerState.PAUSED ||
+      event.data === YouTube.PlayerState.ENDED
+    ) {
+      clearInterval(intervalRef.current!);
     }
   };
 
-  const updateProgress = () => {
-    const targetProgress = (videoWatched ? 50 : 0) + (testCompleted ? 50 : 0);
-    animateProgress(targetProgress);
+  const updateProgress = async () => {
+    if (!auth.currentUser || !id || !userLessonStats) return;
+
+    const newProgress = Math.max(
+      userLessonStats.lessonProgress || 0,
+      Math.min((videoWatched ? 50 : 0) + (testCompleted ? 50 : 0), 100)
+    );
+
+    if (newProgress !== userLessonStats.lessonProgress) {
+      try {
+        await updateDoc(
+          doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`),
+          {
+            lessonProgress: newProgress,
+            lastAccessed: new Date(),
+          }
+        );
+        setUserLessonStats((prev) =>
+          prev ? { ...prev, lessonProgress: newProgress } : null
+        );
+        animateProgress(newProgress);
+      } catch (error) {
+        console.error("Error updating progress:", error);
+      }
+    }
   };
 
+  useEffect(() => {
+    if (auth.currentUser && userLessonStats) {
+      updateProgress();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoWatched, testCompleted, userLessonStats]);
+
   const animateProgress = (targetValue: number) => {
-    const duration = 1000; // Animation duration in milliseconds
-    const frameRate = 60; // Frames per second
+    const duration = 1000;
+    const frameRate = 60;
     const totalFrames = Math.round((duration / 1000) * frameRate);
     const increment = (targetValue - progress) / totalFrames;
 
     let currentFrame = 0;
     const animationInterval = setInterval(() => {
       currentFrame++;
-      setProgress((prevProgress) => prevProgress + increment);
+      setProgress((prevProgress) => {
+        const newProgress = prevProgress + increment;
+        return currentFrame === totalFrames ? targetValue : newProgress;
+      });
 
       if (currentFrame === totalFrames) {
-        setProgress(targetValue); // Ensure it reaches the exact target value
         clearInterval(animationInterval);
       }
     }, duration / totalFrames);
@@ -154,32 +229,44 @@ const LessonPage = () => {
     }));
   };
 
-  const handleTestCompletion = () => {
+  const handleTestCompletion = async () => {
+    if (!auth.currentUser || !id || !quiz) return;
+
     let correctCount = 0;
-    if (quiz) {
-      quiz.questions.forEach((q, index) => {
-        if (selectedAnswers[index] === q.answer) {
-          correctCount++;
-        }
-      });
-    }
+    quiz.questions.forEach((q, index) => {
+      if (selectedAnswers[index] === q.answer) {
+        correctCount++;
+      }
+    });
+
+    const scorePercentage = (correctCount / quiz.questions.length) * 100;
+    await updateDoc(
+      doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`),
+      {
+        maxQuizScore: Math.max(scorePercentage, userLessonStats?.maxQuizScore || 0),
+        lastAccessed: new Date(),
+      }
+    );
+    setUserLessonStats((prev) =>
+      prev
+        ? {
+            ...prev,
+            maxQuizScore: Math.max(scorePercentage, prev.maxQuizScore),
+          }
+        : null
+    );
+
     setScore(correctCount);
     setTestCompleted(true);
     updateProgress();
   };
 
-  useEffect(() => {
-    updateProgress();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoWatched, testCompleted]);
-
-  if (!lesson) {
+  if (!lesson || !userLessonStats) {
     return <div>Loading...</div>;
   }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-      {/* Left side: Video and content */}
       <div className="lg:col-span-2">
         <h1 className="text-4xl font-bold mb-4">{lesson.title}</h1>
         <div className="mb-6">
@@ -200,7 +287,6 @@ const LessonPage = () => {
         </div>
         <p className="mb-6">{lesson.content}</p>
 
-        {/* Quiz Section */}
         <div className="collapse bg-base-200 mb-6">
           <input type="checkbox" />
           <div className="collapse-title text-xl font-medium">
@@ -234,7 +320,7 @@ const LessonPage = () => {
                               name={`question-${index}`}
                               className="radio"
                               onChange={() => handleAnswerSelection(index, option)}
-                              disabled={testCompleted} // Disable input after test completion
+                              disabled={testCompleted}
                             />
                             <span>{option}</span>
                           </label>
@@ -263,9 +349,7 @@ const LessonPage = () => {
         </div>
       </div>
 
-      {/* Right side: Lesson progress and time spent */}
       <div className="sticky pt-6 top-5 flex flex-col gap-4 max-h-[calc(100vh-20px)] overflow-auto">
-        {/* Lesson Progress Card */}
         <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col" style={{ height: "fit-content" }}>
           <h2 className="text-2xl font-semibold mb-4 text-center">Lesson Progress</h2>
           <div
@@ -284,43 +368,45 @@ const LessonPage = () => {
           </div>
         </div>
 
-        {/* Time Spent Card */}
         <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
           <h2 className="text-2xl font-semibold mb-4 text-center">Time spent on this lesson</h2>
           <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-
                 <span style={{ "--value": days } as React.CSSProperties}></span>
               </span>
               days
             </div>
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-
                 <span style={{ "--value": hours } as React.CSSProperties}></span>
               </span>
               hours
             </div>
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-
                 <span style={{ "--value": minutes } as React.CSSProperties}></span>
               </span>
               min
             </div>
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-
                 <span style={{ "--value": seconds } as React.CSSProperties}></span>
               </span>
               sec
             </div>
           </div>
         </div>
+
+        {userLessonStats && (
+          <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
+            <h2 className="text-2xl font-semibold mb-4 text-center">Highest Quiz Score</h2>
+            <p className="text-4xl font-bold">{Math.round(userLessonStats.maxQuizScore)}%</p>
+          </div>
+        )}
       </div>
     </div>
   );
-
 };
+
 export default LessonPage;
