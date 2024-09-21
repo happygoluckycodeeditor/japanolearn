@@ -21,6 +21,14 @@ interface UserLessonStats {
   maxQuizScore: number;
 }
 
+const secondsToTime = (totalSeconds: number) => {
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return { days, hours, minutes, seconds };
+};
+
 const LessonPage = () => {
   const { id } = useParams<{ id: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
@@ -71,6 +79,11 @@ const LessonPage = () => {
           setProgress(stats.lessonProgress);
           setVideoWatched(stats.lessonProgress >= 50);
           setTestCompleted(stats.lessonProgress === 100);
+          const { days, hours, minutes, seconds } = secondsToTime(stats.timeSpent);
+          setDays(days);
+          setHours(hours);
+          setMinutes(minutes);
+          setSeconds(seconds);
         } else {
           const initialStats: UserLessonStats = {
             lessonProgress: 0,
@@ -147,15 +160,16 @@ const LessonPage = () => {
   }, [days, hours, minutes, seconds]);
 
   const updateTimeSpent = async () => {
-    if (auth.currentUser && id) {
-      const totalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
+    if (auth.currentUser && id && userLessonStats) {
+      const newTotalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
+      const updatedTimeSpent = userLessonStats.timeSpent + newTotalSeconds;
       try {
         await updateDoc(doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`), {
-          timeSpent: totalSeconds,
+          timeSpent: updatedTimeSpent,
           lastAccessed: new Date(),
         });
         setUserLessonStats((prev) =>
-          prev ? { ...prev, timeSpent: totalSeconds } : null
+          prev ? { ...prev, timeSpent: updatedTimeSpent } : null
         );
         console.log("Time spent updated successfully");
       } catch (error) {
@@ -380,7 +394,7 @@ const LessonPage = () => {
             {Math.round(progress)}%
           </div>
         </div>
-        {/*The following code is for the time spent on this lesson*/}
+      
         <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
           <h2 className="text-2xl font-semibold mb-4 text-center">Time spent on this lesson</h2>
           <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
@@ -411,7 +425,7 @@ const LessonPage = () => {
           </div>
         </div>
         
-        {/*The following code is for the highest quiz score*/}
+       
         {userLessonStats && (
           <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
             <h2 className="text-2xl font-semibold mb-4 text-center">Highest Quiz Score</h2>
