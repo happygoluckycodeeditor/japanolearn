@@ -101,6 +101,7 @@ const LessonPage = () => {
     return () => unsubscribe();
   }, [id]);
 
+  // Timer logic with setInterval
   useEffect(() => {
     const timeInterval = setInterval(() => {
       setSeconds((prevSeconds) => {
@@ -131,16 +132,35 @@ const LessonPage = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Beforeunload listener for saving time spent when user navigates away
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      updateTimeSpent();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days, hours, minutes, seconds]);
+
   const updateTimeSpent = async () => {
     if (auth.currentUser && id) {
       const totalSeconds = days * 86400 + hours * 3600 + minutes * 60 + seconds;
-      await updateDoc(doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`), {
-        timeSpent: totalSeconds,
-        lastAccessed: new Date(),
-      });
-      setUserLessonStats((prev) =>
-        prev ? { ...prev, timeSpent: totalSeconds } : null
-      );
+      try {
+        await updateDoc(doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`), {
+          timeSpent: totalSeconds,
+          lastAccessed: new Date(),
+        });
+        setUserLessonStats((prev) =>
+          prev ? { ...prev, timeSpent: totalSeconds } : null
+        );
+        console.log("Time spent updated successfully");
+      } catch (error) {
+        console.error("Error updating time spent:", error);
+      }
     }
   };
 
@@ -194,13 +214,6 @@ const LessonPage = () => {
       }
     }
   };
-
-  useEffect(() => {
-    if (auth.currentUser && userLessonStats) {
-      updateProgress();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoWatched, testCompleted, userLessonStats]);
 
   const animateProgress = (targetValue: number) => {
     const duration = 1000;
@@ -367,7 +380,7 @@ const LessonPage = () => {
             {Math.round(progress)}%
           </div>
         </div>
-
+        {/*The following code is for the time spent on this lesson*/}
         <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
           <h2 className="text-2xl font-semibold mb-4 text-center">Time spent on this lesson</h2>
           <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
@@ -397,7 +410,8 @@ const LessonPage = () => {
             </div>
           </div>
         </div>
-
+        
+        {/*The following code is for the highest quiz score*/}
         {userLessonStats && (
           <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
             <h2 className="text-2xl font-semibold mb-4 text-center">Highest Quiz Score</h2>
