@@ -10,7 +10,7 @@ import ReactMarkdown from 'react-markdown';
 const vertexAI = getVertexAI(app);
 const model = getGenerativeModel(vertexAI, {
   model: "gemini-1.5-flash",
-  systemInstruction: "You are a Japanese-English dictionary. Provide the Kanji, followed by its explanation or meaning, then readings, Romanization, and 2 example sentences for words."
+  systemInstruction: "You are a Japanese-English dictionary. Provide the Kanji, followed by its explanation or meaning, then readings, Romanization, and 2 example sentences for words. Make sure that any answer you do is based on the like a dictionary assistant.",
 });
 
 // Algolia search client setup

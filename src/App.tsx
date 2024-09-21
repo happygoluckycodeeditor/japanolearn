@@ -11,6 +11,7 @@ import Navbar from './components/Navbar';
 import LessonPage from './components/LessonPage';
 import Analytics from './components/Analytics';
 import { auth } from './firebase-config';
+import ExercisePage from './components/ExercisePage';
 
 export default function App() {
   const location = useLocation();
@@ -90,6 +91,14 @@ export default function App() {
               <Exercises />
             </PrivateRoute>
           }
+        />
+        <Route
+        path="/exercises/:id"
+        element={
+          <PrivateRoute>
+            <ExercisePage />
+          </PrivateRoute>
+        }
         />
         <Route
           path="/dictionary"

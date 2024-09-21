@@ -50,9 +50,9 @@ const Lessons = () => {
                 <Link to={`/lessons/${lesson.id}`} className="btn btn-primary">
                   Start
                 </Link>
-                <button className="btn btn-secondary" disabled>
+                <Link to={`/exercises/${lesson.id}`} className="btn btn-secondary">
                   Exercise
-                </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -71,9 +71,9 @@ const Lessons = () => {
                 <Link to={`/lessons/${lesson.id}`} className="btn btn-primary">
                   Start
                 </Link>
-                <button className="btn btn-secondary" disabled>
-                  Exercise
-                </button>
+                <Link to={`/exercises/${lesson.id}`} className="btn btn-secondary">
+                Exercise
+                </Link>
               </div>
             </div>
           </div>
@@ -92,9 +92,9 @@ const Lessons = () => {
                 <Link to={`/lessons/${lesson.id}`} className="btn btn-primary">
                   Start
                 </Link>
-                <button className="btn btn-secondary" disabled>
-                  Exercise
-                </button>
+                <Link to={`/exercises/${lesson.id}`} className="btn btn-secondary">
+                Exercise
+                </Link>
               </div>
             </div>
           </div>
