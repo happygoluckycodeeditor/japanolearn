@@ -32,6 +32,7 @@ const Exercises = () => {
   return (
     <div className="p-6">
       <h1 className="text-4xl font-bold mb-6">Exercises</h1>
+      <h2 className="text-2xl font-bold mb-6">Practice more on the exercises and improve your skill!</h2>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
         {lessons.map(lesson => (
