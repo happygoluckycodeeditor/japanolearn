@@ -42,6 +42,12 @@ const QuizComponent: React.FC<QuizProps> = ({ quiz, onQuizComplete }) => {
     onQuizComplete(scorePercentage); // Pass percentage back to parent component
   };
 
+  const handleRetry = () => {
+    setSelectedAnswers({});
+    setTestCompleted(false);
+    setScore(null);
+  };
+
   return (
     <div>
       {quiz.questions.map((q, index) => (
@@ -55,19 +61,30 @@ const QuizComponent: React.FC<QuizProps> = ({ quiz, onQuizComplete }) => {
                   name={`question-${index}`}
                   className="radio"
                   onChange={() => handleAnswerSelection(index, option)}
+                  checked={selectedAnswers[index] === option}
                   disabled={testCompleted}
                 />
                 <span>{option}</span>
               </label>
             ))}
           </div>
+          {testCompleted && selectedAnswers[index] && (
+            <p className={`text-sm ${selectedAnswers[index] === q.answer ? 'text-green-500' : 'text-red-500'}`}>
+              {selectedAnswers[index] === q.answer ? 'Correct!' : `Wrong! The correct answer is ${q.answer}`}
+            </p>
+          )}
         </div>
       ))}
       <button className="btn btn-primary mt-4" onClick={handleTestCompletion} disabled={testCompleted}>
         Submit Quiz
       </button>
       {testCompleted && score !== null && (
-        <p className="mt-4 text-lg font-semibold">You scored {score} out of {quiz.questions.length}</p>
+        <div className="mt-4">
+          <p className="text-lg font-semibold">You scored {score} out of {quiz.questions.length}</p>
+          <button className="btn btn-secondary mt-2" onClick={handleRetry}>
+            Retry Quiz
+          </button>
+        </div>
       )}
     </div>
   );
