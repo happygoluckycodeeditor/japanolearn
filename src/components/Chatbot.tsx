@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { getVertexAI, getGenerativeModel } from "firebase/vertexai-preview";
 import { app } from "../firebase-config"; // Import the Firebase config
@@ -29,6 +29,7 @@ const Chatbot = () => {
   const [chatHistory, setChatHistory] = useState<{ role: string; message: string }[]>([]);
   const [userInput, setUserInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const chatContainerRef = useRef<HTMLDivElement>(null); // Ref for the chat container
 
   // Function to fetch AI response
   const getAiResponse = async (query: string) => {
@@ -90,6 +91,13 @@ const Chatbot = () => {
     setUserInput("");
   };
 
+  // Scroll to the bottom of the chat whenever a new message is added
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatHistory]);
+
   return (
     <div className="drawer drawer-end">
       <input id="chatbot-drawer" type="checkbox" className="drawer-toggle" />
@@ -103,8 +111,8 @@ const Chatbot = () => {
         <label htmlFor="chatbot-drawer" className="drawer-overlay"></label>
         <div className="menu bg-base-200 text-base-content h-full w-[30%] p-4">
           <div className="card bg-base-100 shadow-lg h-full">
-            <div className="card-body h-full">
-              <div className="overflow-y-auto flex-grow mb-4">
+            <div className="card-body h-full flex flex-col">
+              <div className="overflow-y-auto flex-grow mb-4" ref={chatContainerRef}>
                 {chatHistory.map((chat, index) => (
                   <div key={index} className={`chat ${chat.role === "ai" ? "chat-start" : "chat-end"}`}>
                     <div className="chat-bubble">{chat.message}</div>
