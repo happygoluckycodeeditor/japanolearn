@@ -36,10 +36,9 @@ const QuizComponent: React.FC<QuizProps> = ({ quiz, onQuizComplete }) => {
       }
     });
 
-    const scorePercentage = (correctCount / quiz.questions.length) * 100;
-    setScore(correctCount);  // Use correctCount or scorePercentage based on what you want to show
+    setScore(correctCount);  // Set score, even if 0
     setTestCompleted(true);
-    onQuizComplete(scorePercentage); // Pass percentage back to parent component
+    onQuizComplete((correctCount / quiz.questions.length) * 100);
   };
 
   const handleRetry = () => {
@@ -49,7 +48,7 @@ const QuizComponent: React.FC<QuizProps> = ({ quiz, onQuizComplete }) => {
   };
 
   return (
-    <div>
+    <div className="card bg-cream p-6">
       {quiz.questions.map((q, index) => (
         <div key={index} className="mb-4">
           <h4 className="font-semibold">{q.question}</h4>
@@ -75,16 +74,18 @@ const QuizComponent: React.FC<QuizProps> = ({ quiz, onQuizComplete }) => {
           )}
         </div>
       ))}
-      <button className="btn btn-primary mt-4" onClick={handleTestCompletion} disabled={testCompleted}>
-        Submit Quiz
-      </button>
+
+      <div className="flex space-x-4 mt-4">
+        <button className="btn btn-primary" onClick={handleTestCompletion} disabled={testCompleted}>
+          Submit Quiz
+        </button>
+        <button className="btn btn-secondary" onClick={handleRetry} disabled={!testCompleted}>
+          Retry Quiz
+        </button>
+      </div>
+
       {testCompleted && score !== null && (
-        <div className="mt-4">
-          <p className="text-lg font-semibold">You scored {score} out of {quiz.questions.length}</p>
-          <button className="btn btn-secondary mt-2" onClick={handleRetry}>
-            Retry Quiz
-          </button>
-        </div>
+        <p className="mt-4 text-lg font-semibold">You scored {score} out of {quiz.questions.length}</p>
       )}
     </div>
   );
