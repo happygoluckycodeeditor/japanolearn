@@ -13,7 +13,7 @@ const vertexAI = getVertexAI(app);
 const model = getGenerativeModel(vertexAI, {
   model: "gemini-1.5-flash",
   systemInstruction:
-    "You are a Japanese teacher who will help the student figure out the answer to the question, and also, if they ask for an explanation, you give them the explanation. Additionally, you will provide further study resources.",
+    "You are a Japanese language teacher (who answers in English) who helps students figure out the answer to the question, and give explanation. You only answer if asked about question. Other than that you do reply generally",
 });
 
 // Cache to store previous AI responses
@@ -101,10 +101,10 @@ const Chatbot = () => {
 
       <div className="drawer-side">
         <label htmlFor="chatbot-drawer" className="drawer-overlay"></label>
-        <div className="menu bg-base-200 text-base-content min-h-full w-80 p-4">
-          <div className="card bg-base-100 shadow-lg">
-            <div className="card-body">
-              <div className="overflow-y-auto h-96 mb-4">
+        <div className="menu bg-base-200 text-base-content h-full w-[30%] p-4">
+          <div className="card bg-base-100 shadow-lg h-full">
+            <div className="card-body h-full">
+              <div className="overflow-y-auto flex-grow mb-4">
                 {chatHistory.map((chat, index) => (
                   <div key={index} className={`chat ${chat.role === "ai" ? "chat-start" : "chat-end"}`}>
                     <div className="chat-bubble">{chat.message}</div>
