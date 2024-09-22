@@ -1,13 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../firebase-config";
+import { db, auth, storage } from "../firebase-config";
 import { onAuthStateChanged } from "firebase/auth";
-import YouTube, { YouTubeProps, YouTubePlayer } from "react-youtube";
+import { ref, getDownloadURL } from "firebase/storage";
 
 interface Lesson {
   title: string;
-  videoURL: string;
+  storageURL: string;
   content: string;
 }
 
@@ -33,7 +33,6 @@ const LessonPage = () => {
   const { id } = useParams<{ id: string }>();
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
-  const [player, setPlayer] = useState<YouTubePlayer | null>(null);
   const [progress, setProgress] = useState<number>(0);
   const [videoWatched, setVideoWatched] = useState(false);
   const [testCompleted, setTestCompleted] = useState(false);
@@ -48,16 +47,17 @@ const LessonPage = () => {
 
   const [userLessonStats, setUserLessonStats] = useState<UserLessonStats | null>(null);
 
-  const intervalRef = useRef<number | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const fetchLesson = async () => {
       if (id) {
         const lessonDoc = await getDoc(doc(db, "lessons", id));
         if (lessonDoc.exists()) {
-          const data = lessonDoc.data() as Lesson;
-          const videoID = new URL(data.videoURL).searchParams.get("v");
-          setLesson({ ...data, videoURL: videoID ?? "" });
+          const lessonData = lessonDoc.data() as Lesson;
+          const videoRef = ref(storage, lessonData.storageURL);
+          const videoURL = await getDownloadURL(videoRef);
+          setLesson({ ...lessonData, storageURL: videoURL });
         }
       }
     };
@@ -85,18 +85,16 @@ const LessonPage = () => {
           setHours(hours);
           setMinutes(minutes);
           setSeconds(seconds);
-          setLastUpdateTime(Date.now()); // Set the last update time
+          setLastUpdateTime(Date.now());
         } else {
           const initialStats: UserLessonStats = {
             lessonProgress: 0,
             timeSpent: 0,
             maxQuizScore: 0,
           };
-          await setDoc(
-            doc(db, "userLessonStats", `${userUid}_${id}`),
-            initialStats,
-            { merge: true }
-          );
+          await setDoc(doc(db, "userLessonStats", `${userUid}_${id}`), initialStats, {
+            merge: true,
+          });
           setUserLessonStats(initialStats);
         }
       }
@@ -116,7 +114,6 @@ const LessonPage = () => {
     return () => unsubscribe();
   }, [id]);
 
-  // Timer logic with setInterval
   useEffect(() => {
     const timeInterval = setInterval(() => {
       setSeconds((prevSeconds) => {
@@ -144,10 +141,9 @@ const LessonPage = () => {
       clearInterval(timeInterval);
       updateTimeSpent();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Beforeunload listener for saving time spent when user navigates away
   useEffect(() => {
     const handleBeforeUnload = () => {
       updateTimeSpent();
@@ -158,62 +154,45 @@ const LessonPage = () => {
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [days, hours, minutes, seconds]);
 
-  const updateTimeSpent = async () => {
-    if (auth.currentUser && id && userLessonStats) {
-      const currentTime = Date.now();
-      const timeDifference = Math.floor((currentTime - lastUpdateTime) / 1000); // Convert to seconds
-      const updatedTimeSpent = userLessonStats.timeSpent + timeDifference;
-      try {
-        await updateDoc(doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`), {
-          timeSpent: updatedTimeSpent,
-          lastAccessed: new Date(),
-        });
-        setUserLessonStats((prev) =>
-          prev ? { ...prev, timeSpent: updatedTimeSpent } : null
-        );
-        setLastUpdateTime(currentTime);
-        console.log("Time spent updated successfully");
-      } catch (error) {
-        console.error("Error updating time spent:", error);
+  // Add useEffect to monitor videoWatched and testCompleted
+  useEffect(() => {
+    updateProgress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoWatched, testCompleted]);
+
+  const handleVideoProgress = () => {
+    if (videoRef.current) {
+      const progress =
+        (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      console.log(`Video progress: ${progress}%`); // Debugging output
+      if (progress >= 80 && !videoWatched) {
+        console.log("80% of video watched, updating progress...");
+        setVideoWatched(true);
+        // Removed updateProgress();
       }
-    }
-  };
-
-  const onReady: YouTubeProps["onReady"] = (event) => {
-    setPlayer(event.target);
-  };
-
-  const onStateChange: YouTubeProps["onStateChange"] = (event) => {
-    if (event.data === YouTube.PlayerState.PLAYING && player) {
-      const checkProgress = () => {
-        const currentTime = player.getCurrentTime();
-        const duration = player.getDuration();
-        if (currentTime / duration >= 0.8 && !videoWatched) {
-          setVideoWatched(true);
-          updateProgress();
-          clearInterval(intervalRef.current!);
-        }
-      };
-      intervalRef.current = window.setInterval(checkProgress, 1000);
-    } else if (
-      event.data === YouTube.PlayerState.PAUSED ||
-      event.data === YouTube.PlayerState.ENDED
-    ) {
-      clearInterval(intervalRef.current!);
     }
   };
 
   const updateProgress = async () => {
     if (!auth.currentUser || !id || !userLessonStats) return;
 
+    // Calculate the new progress based on video watched and test completion
     const newProgress = Math.max(
       userLessonStats.lessonProgress || 0,
-      Math.min((videoWatched ? 50 : 0) + (testCompleted ? 50 : 0), 100)
+      Math.min(
+        (videoWatched ? 50 : 0) + (testCompleted ? 50 : 0),
+        100
+      )
     );
 
+    console.log(
+      `Updating progress: Current ${userLessonStats.lessonProgress}, New ${newProgress}`
+    ); // Debugging output
+
+    // Check if there's a progress update needed
     if (newProgress !== userLessonStats.lessonProgress) {
       try {
         await updateDoc(
@@ -229,6 +208,36 @@ const LessonPage = () => {
         animateProgress(newProgress);
       } catch (error) {
         console.error("Error updating progress:", error);
+      }
+    }
+  };
+
+  const updateTimeSpent = async () => {
+    if (auth.currentUser && id && userLessonStats) {
+      const currentTime = Date.now();
+      const timeDifference = Math.floor((currentTime - lastUpdateTime) / 1000);
+      const updatedTimeSpent = userLessonStats.timeSpent + timeDifference;
+      try {
+        await updateDoc(
+          doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`),
+          {
+            timeSpent: updatedTimeSpent,
+            lastAccessed: new Date(),
+          }
+        );
+        setUserLessonStats((prev) =>
+          prev ? { ...prev, timeSpent: updatedTimeSpent } : null
+        );
+        setLastUpdateTime(currentTime);
+        const { days, hours, minutes, seconds } = secondsToTime(
+          updatedTimeSpent
+        );
+        setDays(days);
+        setHours(hours);
+        setMinutes(minutes);
+        setSeconds(seconds);
+      } catch (error) {
+        console.error("Error updating time spent:", error);
       }
     }
   };
@@ -253,7 +262,10 @@ const LessonPage = () => {
     }, duration / totalFrames);
   };
 
-  const handleAnswerSelection = (questionIndex: number, selectedOption: string) => {
+  const handleAnswerSelection = (
+    questionIndex: number,
+    selectedOption: string
+  ) => {
     setSelectedAnswers((prev) => ({
       ...prev,
       [questionIndex]: selectedOption,
@@ -274,7 +286,10 @@ const LessonPage = () => {
     await updateDoc(
       doc(db, "userLessonStats", `${auth.currentUser.uid}_${id}`),
       {
-        maxQuizScore: Math.max(scorePercentage, userLessonStats?.maxQuizScore || 0),
+        maxQuizScore: Math.max(
+          scorePercentage,
+          userLessonStats?.maxQuizScore || 0
+        ),
         lastAccessed: new Date(),
       }
     );
@@ -289,7 +304,7 @@ const LessonPage = () => {
 
     setScore(correctCount);
     setTestCompleted(true);
-    updateProgress();
+    // Removed updateProgress();
   };
 
   if (!lesson || !userLessonStats) {
@@ -301,20 +316,16 @@ const LessonPage = () => {
       <div className="lg:col-span-2">
         <h1 className="text-4xl font-bold mb-4">{lesson.title}</h1>
         <div className="mb-6">
-          <YouTube
-            videoId={lesson.videoURL}
-            onReady={onReady}
-            onStateChange={onStateChange}
-            opts={{
-              width: "100%",
-              height: "400",
-              playerVars: {
-                autoplay: 0,
-                controls: 1,
-                modestbranding: 1,
-              },
-            }}
-          />
+          <video
+            ref={videoRef}
+            src={lesson.storageURL}
+            controls
+            className="w-full"
+            style={{ maxHeight: "400px" }}
+            onTimeUpdate={handleVideoProgress}
+          >
+            Your browser does not support the video tag.
+          </video>
         </div>
         <p className="mb-6">{lesson.content}</p>
 
@@ -331,7 +342,8 @@ const LessonPage = () => {
                     <h4 className="font-semibold">{q.question}</h4>
                     <div className="flex flex-col">
                       {q.options.map((option, i) => {
-                        const isCorrect = testCompleted && option === q.answer;
+                        const isCorrect =
+                          testCompleted && option === q.answer;
                         const isSelected = selectedAnswers[index] === option;
                         return (
                           <label
@@ -350,7 +362,9 @@ const LessonPage = () => {
                               type="radio"
                               name={`question-${index}`}
                               className="radio"
-                              onChange={() => handleAnswerSelection(index, option)}
+                              onChange={() =>
+                                handleAnswerSelection(index, option)
+                              }
                               disabled={testCompleted}
                             />
                             <span>{option}</span>
@@ -381,8 +395,13 @@ const LessonPage = () => {
       </div>
 
       <div className="sticky pt-6 top-5 flex flex-col gap-4 max-h-[calc(100vh-20px)] overflow-auto">
-        <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col" style={{ height: "fit-content" }}>
-          <h2 className="text-2xl font-semibold mb-4 text-center">Lesson Progress</h2>
+        <div
+          className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col"
+          style={{ height: "fit-content" }}
+        >
+          <h2 className="text-2xl font-semibold mb-4 text-center">
+            Lesson Progress
+          </h2>
           <div
             className="radial-progress"
             style={
@@ -398,42 +417,55 @@ const LessonPage = () => {
             {Math.round(progress)}%
           </div>
         </div>
-      
+
         <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
-          <h2 className="text-2xl font-semibold mb-4 text-center">Time spent on this lesson</h2>
+          <h2 className="text-2xl font-semibold mb-4 text-center">
+            Time spent on this lesson
+          </h2>
           <div className="grid grid-flow-col gap-5 text-center auto-cols-max">
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-                <span style={{ "--value": days } as React.CSSProperties}></span>
+                <span
+                  style={{ "--value": days } as React.CSSProperties}
+                ></span>
               </span>
               days
             </div>
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-                <span style={{ "--value": hours } as React.CSSProperties}></span>
+                <span
+                  style={{ "--value": hours } as React.CSSProperties}
+                ></span>
               </span>
               hours
             </div>
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-                <span style={{ "--value": minutes } as React.CSSProperties}></span>
+                <span
+                  style={{ "--value": minutes } as React.CSSProperties}
+                ></span>
               </span>
               min
             </div>
             <div className="flex flex-col">
               <span className="countdown font-mono text-5xl">
-                <span style={{ "--value": seconds } as React.CSSProperties}></span>
+                <span
+                  style={{ "--value": seconds } as React.CSSProperties}
+                ></span>
               </span>
               sec
             </div>
           </div>
         </div>
-        
-       
+
         {userLessonStats && (
           <div className="card bg-gray-100 shadow-lg p-6 flex items-center justify-center flex-col">
-            <h2 className="text-2xl font-semibold mb-4 text-center">Highest Quiz Score</h2>
-            <p className="text-4xl font-bold">{Math.round(userLessonStats.maxQuizScore)}%</p>
+            <h2 className="text-2xl font-semibold mb-4 text-center">
+              Highest Quiz Score
+            </h2>
+            <p className="text-4xl font-bold">
+              {Math.round(userLessonStats.maxQuizScore)}%
+            </p>
           </div>
         )}
       </div>
