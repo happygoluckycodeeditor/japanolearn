@@ -5,6 +5,7 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase-config";
 import { onAuthStateChanged } from "firebase/auth";
 import YouTube, { YouTubeProps, YouTubePlayer } from "react-youtube";
+import Chatbot from "./Chatbot";
 
 interface Lesson {
   title: string;
@@ -340,65 +341,68 @@ const LessonPage = () => {
             }}
           />
         </div>
-        <p className="mb-6">{lesson.content}</p>
 
-        <div className="collapse bg-base-200 mb-6">
-          <input type="checkbox" />
-          <div className="collapse-title text-xl font-medium">Click here to start the quiz</div>
-          <div className="collapse-content">
-            {quiz ? (
-              <div>
-                {quiz.questions.map((q, index) => (
-                  <div key={index} className="mb-4">
-                    <h4 className="font-semibold">{q.question}</h4>
-                    <div className="flex flex-col">
-                      {q.options.map((option, i) => {
-                        const isCorrect = testCompleted && option === q.answer;
-                        const isSelected = selectedAnswers[index] === option;
-                        return (
-                          <label
-                            key={i}
-                            className={`flex items-center space-x-2 mb-2 border ${
-                              testCompleted
-                                ? isCorrect
-                                  ? "border-green-400"
-                                  : isSelected
-                                  ? "border-red-400"
-                                  : ""
-                                : ""
-                            }`}
-                          >
-                            <input
-                              type="radio"
-                              name={`question-${index}`}
-                              className="radio"
-                              onChange={() => handleAnswerSelection(index, option)}
-                              disabled={testCompleted}
-                            />
-                            <span>{option}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
+        <div id="forai">
+            <p className="mb-6">{lesson.content}</p>
+
+            <div className="collapse bg-base-200 mb-6">
+              <input type="checkbox" />
+              <div className="collapse-title text-xl font-medium">Click here to start the quiz</div>
+              <div className="collapse-content">
+                {quiz ? (
+                  <div>
+                    {quiz.questions.map((q, index) => (
+                      <div key={index} className="mb-4">
+                        <h4 className="font-semibold">{q.question}</h4>
+                        <div className="flex flex-col">
+                          {q.options.map((option, i) => {
+                            const isCorrect = testCompleted && option === q.answer;
+                            const isSelected = selectedAnswers[index] === option;
+                            return (
+                              <label
+                                key={i}
+                                className={`flex items-center space-x-2 mb-2 border ${
+                                  testCompleted
+                                    ? isCorrect
+                                      ? "border-green-400"
+                                      : isSelected
+                                      ? "border-red-400"
+                                      : ""
+                                    : ""
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`question-${index}`}
+                                  className="radio"
+                                  onChange={() => handleAnswerSelection(index, option)}
+                                  disabled={testCompleted}
+                                />
+                                <span>{option}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      className="btn btn-primary mt-4"
+                      onClick={handleTestCompletion}
+                      disabled={testCompleted}
+                    >
+                      Submit Quiz
+                    </button>
+                    {testCompleted && score !== null && (
+                      <p className="mt-4 text-lg font-semibold">
+                        You scored {score} out of {quiz.questions.length}
+                      </p>
+                    )}
                   </div>
-                ))}
-                <button
-                  className="btn btn-primary mt-4"
-                  onClick={handleTestCompletion}
-                  disabled={testCompleted}
-                >
-                  Submit Quiz
-                </button>
-                {testCompleted && score !== null && (
-                  <p className="mt-4 text-lg font-semibold">
-                    You scored {score} out of {quiz.questions.length}
-                  </p>
+                ) : (
+                  <p>Loading quiz...</p>
                 )}
               </div>
-            ) : (
-              <p>Loading quiz...</p>
-            )}
-          </div>
+            </div>
         </div>
       </div>
 
@@ -463,6 +467,7 @@ const LessonPage = () => {
           </div>
         )}
       </div>
+      <Chatbot />
     </div>
   );
 };
