@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "../firebase-config"; // Assuming firebase-config is correctly set up
+import Chatbot from "./Chatbot";
 
 interface Question {
   question: string;
@@ -139,7 +140,7 @@ const ExercisePage = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
       {/* Main content inside a card with solid color #efeae6 */}
-      <div className="lg:col-span-2 card p-6" style={{ backgroundColor: "#efeae6", zIndex: 0 }}>
+      <div className="lg:col-span-2 card p-6" style={{ backgroundColor: "#efeae6", zIndex: 0 }} id="forai">
         <h1 className="text-4xl font-bold mb-4">
           {lessonTitle ? `Exercise for ${lessonTitle}` : "Loading lesson..."}
         </h1>
@@ -225,6 +226,8 @@ const ExercisePage = () => {
           </div>
         </div>
       </div>
+      {/*Chatbot */}
+      <Chatbot />
     </div>
   );
 };
