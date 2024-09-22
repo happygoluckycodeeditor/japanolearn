@@ -137,9 +137,9 @@ const ExercisePage = () => {
   };
 
   return (
-    <div className="flex">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
       {/* Main content inside a card with solid color #efeae6 */}
-      <div className="w-3/4 p-6 card" style={{ backgroundColor: "#efeae6", zIndex: 0 }}>
+      <div className="lg:col-span-2 card p-6" style={{ backgroundColor: "#efeae6", zIndex: 0 }}>
         <h1 className="text-4xl font-bold mb-4">
           {lessonTitle ? `Exercise for ${lessonTitle}` : "Loading lesson..."}
         </h1>
@@ -191,32 +191,38 @@ const ExercisePage = () => {
         )}
       </div>
 
-      {/* Right sidebar for stats */}
-      <div className="w-1/4 p-4 space-y-4">
-        <div className="card bg-gray-100 p-4 sticky top-4">
-          <h3 className="font-semibold text-lg">Average Accuracy</h3>
-          <p className="text-3xl">
-            {userTestData ? userTestData.averageAccuracy.toFixed(2) : "--"}%
-          </p>
+      {/* Right sidebar for stats using DaisyUI cards */}
+      <div className="sticky top-5 flex flex-col space-y-4 max-h-[calc(100vh-20px)] overflow-auto">
+        <div className="card bg-base-100 shadow-md">
+          <div className="card-body">
+            <h3 className="card-title">Average Accuracy</h3>
+            <p className="text-3xl">
+              {userTestData ? userTestData.averageAccuracy.toFixed(2) : "--"}%
+            </p>
+          </div>
         </div>
 
-        <div className="card bg-gray-100 p-4 sticky top-24">
-          <h3 className="font-semibold text-lg">Max Score</h3>
-          <p
-            className="text-3xl bg-clip-text text-transparent"
-            style={{
-              backgroundImage: "linear-gradient(90deg, #ff0000, #ff9900, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff)",
-            }}
-          >
-            {userTestData ? userTestData.maxExerciseScore : "--"}%
-          </p>
+        <div className="card bg-base-100 shadow-md">
+          <div className="card-body">
+            <h3 className="card-title">Max Score</h3>
+            <p
+              className="text-3xl bg-clip-text text-transparent"
+              style={{
+                backgroundImage: "linear-gradient(90deg, #ff0000, #ff9900, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff)",
+              }}
+            >
+              {userTestData ? userTestData.maxExerciseScore : "--"}%
+            </p>
+          </div>
         </div>
 
-        <div className="card bg-gray-100 p-4 sticky top-44">
-          <h3 className="font-semibold text-lg">Number of Tries</h3>
-          <p className="text-3xl">
-            {userTestData ? userTestData.numberOfTries : "--"}
-          </p>
+        <div className="card bg-base-100 shadow-md">
+          <div className="card-body">
+            <h3 className="card-title">Number of Tries</h3>
+            <p className="text-3xl">
+              {userTestData ? userTestData.numberOfTries : "--"}
+            </p>
+          </div>
         </div>
       </div>
     </div>
