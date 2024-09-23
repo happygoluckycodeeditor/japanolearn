@@ -13,6 +13,11 @@ const About: React.FC = () => {
         costly. With Japanolearn, learners can access high-quality language
         education from anywhere, helping bridge the gap in learning resources.
       </p>
+      <p className="mb-4">
+      発展途上国には、日本語を学びたいと願う人が多いですが、教師を雇ったり、語学学校に通ったりする経済的な余裕がない場合が多いです。
+      私自身も大学で日本語を学ぶ時に、教育リソースが限られている状況で学習する大変さを経験しました。
+      そこで、そんな経済的に困っている学習者を支援するために、AI技術を活用して日本語学習をもっと手軽にできるようにしたいと考え、JapanoLearnを開発しました。
+      </p>
       <h2 className="text-2xl font-semibold mb-2">Contribution to SDGs</h2>
       <p className="mb-4">
         Japanolearn aligns with several Sustainable Development Goals (SDGs), particularly:
