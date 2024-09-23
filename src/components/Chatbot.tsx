@@ -11,7 +11,7 @@ initializeAppCheck(app, {
 // Initialize Vertex AI (similar to how you did for the dictionary component)
 const vertexAI = getVertexAI(app);
 const model = getGenerativeModel(vertexAI, {
-  model: "gemini-1.5-flash",
+  model: "gemini-1.5-pro",
   systemInstruction:
     "You are a Japanese language teacher (who answers in English) who helps students figure out the answer to the question, and give explanation. You only answer if asked about question. Other than that you do reply generally. Keep you answers short and concise.",
 });
@@ -45,20 +45,36 @@ const Chatbot = () => {
     try {
       // Get the content from the div with id="forai" for context
       const pageContext = getActiveDivContent();
-      const combinedMessage = `${query}\n\nContext:\n${pageContext}`;
 
-      // Initialize the chat with user's query and div content combined
+      // Combine all previous chat history (role: user/ai) into a single string
+      const previousChatMessages = chatHistory
+        .map((chat) => `${chat.role === "ai" ? "AI: " : "User: "} ${chat.message}`)
+        .join("\n");
+
+      // Create a single prompt from previous history, page context, and the new query
+      const combinedMessage = `
+        Previous conversation:
+        ${previousChatMessages}
+
+        Context:
+        ${pageContext}
+
+        User's new question:
+        ${query}
+      `;
+
+      // Send this combined message as a single prompt to the AI model
       const chat = model.startChat({
         history: [
           {
-            role: "user",
+            role: "user", // Ensure correct role for the AI model
             parts: [{ text: combinedMessage }],
           },
         ],
         generationConfig: { maxOutputTokens: 500 },
       });
 
-      // Send message to Vertex AI and stream response
+      // Stream the AI response
       const result = await chat.sendMessageStream(combinedMessage);
       let responseText = "";
 
@@ -66,7 +82,7 @@ const Chatbot = () => {
         responseText += chunk.text();
       }
 
-      // Cache and update chat history with AI response
+      // Cache the response and update chat history with the AI response
       aiCache[query] = responseText;
       setChatHistory((prev) => [...prev, { role: "ai", message: responseText }]);
     } catch (error) {
@@ -107,7 +123,7 @@ const Chatbot = () => {
             </label>
         </div>
 
-      <div className="drawer-side">
+       <div className="drawer-side">
         <label htmlFor="chatbot-drawer" className="drawer-overlay"></label>
         <div className="menu bg-base-200 text-base-content h-full w-[30%] p-4">
           <div className="card bg-base-100 shadow-lg h-full">
