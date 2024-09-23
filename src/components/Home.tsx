@@ -77,7 +77,8 @@ const Home = () => {
       querySnapshot.forEach((doc) => {
         if (doc.id.startsWith(userUid + "_")) {
           const data = doc.data();
-          if (data.averageAccuracy !== undefined) {
+          // Check if averageAccuracy is defined and greater than 0
+          if (data.averageAccuracy !== undefined && data.averageAccuracy > 0) {
             totalAccuracy += data.averageAccuracy;
             count++;
           }
