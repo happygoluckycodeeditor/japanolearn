@@ -97,7 +97,7 @@ const Login = () => {
       </div>
 
       {/* Disclaimer text in Japanese below the card */}
-      <p className="text-sm text-gray-600 mt-4 text-center">
+      <p className="text-sm text-gray-600 mt-4 text-center ml-4 mr-4">
         注意事項：Googleを通じてサインインし、レッスンや演習のデータを保存するアカウントを作成します。
         <br />
         アカウントを削除したい場合は、tanmay.bagwe.tb@gmail.comまでご連絡ください。
