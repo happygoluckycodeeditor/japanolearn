@@ -5,6 +5,7 @@ import { auth, provider, db } from "../firebase-config"; // Import Firestore
 import logo from "../assets/logo.svg"; // Import the new SVG logo
 import googleSignIn from "../assets/web_dark_rd_SI.svg"; // Import the new Google Sign-In button SVG
 import { useNavigate } from "react-router-dom";
+import Typewriter from "typewriter-effect";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Login = () => {
           totalTimeSpent: 0, // in seconds
           lessonsCompleted: 0,
           lastLessonId: null,
-          quizScores: {}
+          quizScores: {},
         });
         console.log("User stats initialized for:", userId);
       }
@@ -60,6 +61,23 @@ const Login = () => {
 
   return (
     <div className="flex flex-col justify-center items-center h-screen bg-base-200">
+      {/* Typewriter animation */}
+      <div className="mb-6 text-3xl font-bold text-center">
+        <span>Learn </span>
+        <Typewriter
+          options={{
+            strings: ["Japanese", "日本語", "with AI"],
+            autoStart: true,
+            loop: true,
+            cursor: "|",
+            deleteSpeed: 50,
+            delay: 75,
+            wrapperClassName: "inline text-[#ff5757]",
+            cursorClassName: "inline text-[#ff5757] text-4xl leading-none",
+          }}
+        />
+      </div>
+
       <div className="card lg:card-side bg-base-100 shadow-xl">
         <figure>
           <img src={logo} alt="JapanoLearn Logo" />
@@ -68,8 +86,8 @@ const Login = () => {
           <h2 className="card-title">Welcome to JapanoLearn!</h2>
           <p>Let's get started!</p>
           <div className="card-actions justify-end">
-            <img 
-              src={googleSignIn} 
+            <img
+              src={googleSignIn}
               alt="Sign in with Google"
               onClick={signInWithGoogle} // Trigger Google sign-in on image click
               className="cursor-pointer" // Add pointer cursor to the image
@@ -77,9 +95,11 @@ const Login = () => {
           </div>
         </div>
       </div>
-      {/* Disclaimer text in Japanese below the card and make sure everything works */}
-      <p className="text-sm text-gray-600 mt-4 text-center">
-        注意事項：Googleを通じてサインインし、レッスンや演習のデータを保存するアカウントを作成します。<br />
+
+      {/* Disclaimer text in Japanese below the card */}
+      <p className="text-sm text-gray-600 mt-4 text-center ml-4 mr-4">
+        注意事項：Googleを通じてサインインし、レッスンや演習のデータを保存するアカウントを作成します。
+        <br />
         アカウントを削除したい場合は、tanmay.bagwe.tb@gmail.comまでご連絡ください。
       </p>
     </div>

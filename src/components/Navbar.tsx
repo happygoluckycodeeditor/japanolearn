@@ -62,7 +62,7 @@ const Navbar = () => {
           </li>
           <li><a href="/exercises">Exercises</a></li>
           <li><a href="/dictionary">Dictionary</a></li>
-          
+          <li><a href="/about">About</a></li>
         </ul>
       </div>
       <div className="navbar-end">
