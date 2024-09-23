@@ -9,7 +9,7 @@ import Dictionary from './components/Dictionary';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
 import LessonPage from './components/LessonPage';
-
+import About from './components/About';
 import { auth } from './firebase-config';
 import ExercisePage from './components/ExercisePage';
 
@@ -108,7 +108,14 @@ export default function App() {
             </PrivateRoute>
           }
         />
-
+        <Route
+        path="/about"
+        element={
+            <PrivateRoute>
+              <About />
+            </PrivateRoute>
+        }
+        />
       </Routes>
     </div>
   );

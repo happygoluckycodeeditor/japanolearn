@@ -120,6 +120,11 @@ const Dictionary = () => {
         <button type="submit" className="btn btn-primary">Search</button>
       </form>
 
+      {/* Disclaimer that I am using Algolia and Vertex AI */}
+      <p className="text-sm text-gray-500 mb-4">
+        This is a search engine powered by Algolia and Vertex AI.
+      </p>
+
       {/* JapanoAssistant Response (AI-generated content) */}
       <div className="mb-6">
         <h2 className="text-2xl font-semibold mb-2">Japanolearn's Response</h2>
