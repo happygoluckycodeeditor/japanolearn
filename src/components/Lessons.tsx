@@ -39,7 +39,7 @@ const Lessons = () => {
       <h1 className="text-4xl font-bold mb-6">Lessons</h1>
 
       {/* Introduction to Japanolearn */}
-      <h2 className="text-2xl font-bold mb-4">Introduction to Japanolearn</h2>
+      <h2 className="text-2xl font-bold mb-4">Beginner Lessons</h2>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
         {introductionLessons.map(lesson => (
           <div key={lesson.id} className="card lg:card-side bg-base-100 shadow-xl">
@@ -81,7 +81,7 @@ const Lessons = () => {
       </div>
 
       {/* How to Use AI in Japanolearn */}
-      <h2 className="text-2xl font-bold mb-4">How to Use AI in Japanolearn</h2>
+      <h2 className="text-2xl font-bold mb-4">Fun Videos</h2>
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {aiLessons.map(lesson => (
           <div key={lesson.id} className="card lg:card-side bg-base-100 shadow-xl">

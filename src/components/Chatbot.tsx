@@ -13,7 +13,7 @@ const vertexAI = getVertexAI(app);
 const model = getGenerativeModel(vertexAI, {
   model: "gemini-1.5-flash",
   systemInstruction:
-    "You are a Japanese language teacher (who answers in English) who helps students figure out the answer to the question, and give explanation. You only answer if asked about question. Other than that you do reply generally",
+    "You are a Japanese language teacher (who answers in English) who helps students figure out the answer to the question, and give explanation. You only answer if asked about question. Other than that you do reply generally. Keep you answers short and concise.",
 });
 
 // Cache to store previous AI responses

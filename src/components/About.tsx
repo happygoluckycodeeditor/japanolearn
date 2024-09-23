@@ -37,6 +37,7 @@ const About: React.FC = () => {
         <li>And all other open-source tools and libraries used to make this project possible.</li>
       </ul>
       <p>I sincerely thank everyone who contributed to my small passion Project. I love all of you. 🥰</p>
+      <p>Made by Tanmay, made in Tokyo 🥰</p>
     </div>
   );
 };
