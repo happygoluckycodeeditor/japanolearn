@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore"; // Firestore functions
 import { auth, provider, db } from "../firebase-config"; // Import Firestore
 import logo from "../assets/logo.svg"; // Import the new SVG logo
+import googleSignIn from "../assets/web_dark_rd_SI.svg"; // Import the new Google Sign-In button SVG
 import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const [loading, setLoading] = useState(false); // State for loading spinner
   const navigate = useNavigate();
 
   // Initialize user stats in Firestore
@@ -44,7 +44,6 @@ const Login = () => {
   }, [navigate]);
 
   const signInWithGoogle = async () => {
-    setLoading(true); // Start loading spinner
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
@@ -56,13 +55,11 @@ const Login = () => {
     } catch (error) {
       console.error("Error logging in:", error);
       alert("An error occurred during sign-in. Please try again.");
-    } finally {
-      setLoading(false); // Stop loading spinner after process
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-base-200">
+    <div className="flex flex-col justify-center items-center h-screen bg-base-200">
       <div className="card lg:card-side bg-base-100 shadow-xl">
         <figure>
           <img src={logo} alt="JapanoLearn Logo" />
@@ -71,20 +68,20 @@ const Login = () => {
           <h2 className="card-title">Welcome to JapanoLearn!</h2>
           <p>Let's get started!</p>
           <div className="card-actions justify-end">
-            <button 
-              onClick={signInWithGoogle} 
-              className="btn btn-primary" 
-              disabled={loading} // Disable button during loading
-            >
-              {loading ? (
-                <span className="loading loading-ring loading-lg"></span> // DaisyUI loading ring
-              ) : (
-                "Sign in with Google"
-              )}
-            </button>
+            <img 
+              src={googleSignIn} 
+              alt="Sign in with Google"
+              onClick={signInWithGoogle} // Trigger Google sign-in on image click
+              className="cursor-pointer" // Add pointer cursor to the image
+            />
           </div>
         </div>
       </div>
+      {/* Disclaimer text in Japanese below the card */}
+      <p className="text-sm text-gray-600 mt-4 text-center">
+        注意事項：Googleを通じてサインインし、レッスンや演習のデータを保存するアカウントを作成します。<br />
+        アカウントを削除したい場合は、tanmay.bagwe.tb@gmail.comまでご連絡ください。
+      </p>
     </div>
   );
 };
