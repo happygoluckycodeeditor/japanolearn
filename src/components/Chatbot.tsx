@@ -101,17 +101,18 @@ const Chatbot = () => {
   return (
     <div className="drawer drawer-end">
       <input id="chatbot-drawer" type="checkbox" className="drawer-toggle" />
-      <div className="drawer-content">
-        <label htmlFor="chatbot-drawer" className="btn btn-circle fixed bottom-5 right-5">
-          Chat
-        </label>
-      </div>
+        <div className="drawer-content">
+            <label htmlFor="chatbot-drawer" className="btn fixed bottom-5 right-5 btn-accent">
+            Chat with Sensei
+            </label>
+        </div>
 
       <div className="drawer-side">
         <label htmlFor="chatbot-drawer" className="drawer-overlay"></label>
         <div className="menu bg-base-200 text-base-content h-full w-[30%] p-4">
           <div className="card bg-base-100 shadow-lg h-full">
             <div className="card-body h-full flex flex-col">
+            <h2 className="text-2xl font-bold mb-4 text-center">JapanoSensei</h2>
               <div className="overflow-y-auto flex-grow mb-4" ref={chatContainerRef}>
                 {chatHistory.map((chat, index) => (
                   <div key={index} className={`chat ${chat.role === "ai" ? "chat-start" : "chat-end"}`}>
