@@ -104,7 +104,7 @@ const Home = () => {
   };
 
   return (
-    <div className="p-6 pl-24 pr-24">
+    <div className="p-6 sm:pl-10 sm:pr-10 md:pl-24 md:pr-24">
       {/* Greeting */}
       <h1 className="text-4xl font-bold">Hi, {userName ? userName : "User"}!</h1>
       <p className="mt-4">Let's Start learning Japanese</p>
