@@ -34,7 +34,7 @@ const Navbar = () => {
           </div>
           <ul
             tabIndex={0}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[50] mt-3 w-52 p-2 shadow">
             <li><a href="/home">Home</a></li>
             <li>
               <a>Lessons</a>
@@ -53,7 +53,7 @@ const Navbar = () => {
         <ul className="menu menu-horizontal px-1">
           <li><a href="/home">Home</a></li>
           <li>
-            <details>
+            <details className="z-[50]">
               <summary>Lessons</summary>
               <ul className="p-2">
                 <li><a href="/lessons">All Lessons</a></li>
