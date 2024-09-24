@@ -125,7 +125,7 @@ const Chatbot = () => {
 
        <div className="drawer-side">
         <label htmlFor="chatbot-drawer" className="drawer-overlay"></label>
-        <div className="menu bg-base-200 text-base-content h-full w-[30%] p-4">
+        <div className="menu bg-base-200 text-base-content h-full w-[90%] sm:w-[70%] md:w-[30%] p-4">
           <div className="card bg-base-100 shadow-lg h-full">
             <div className="card-body h-full flex flex-col">
             <h2 className="text-2xl font-bold mb-4 text-center">JapanoSensei</h2>
@@ -139,7 +139,7 @@ const Chatbot = () => {
 
               {isLoading && <div className="loading loading-spinner">Loading...</div>}
 
-              <div className="flex items-center">
+              <div className="flex flex-col sm:flex-row items-center gap-2">
                 <input
                   type="text"
                   className="input input-bordered w-full"
