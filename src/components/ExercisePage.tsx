@@ -140,7 +140,7 @@ const ExercisePage = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4">
       {/* Main content inside a card with solid color #efeae6 */}
-      <div className="lg:col-span-2 card p-6" style={{ backgroundColor: "#efeae6", zIndex: -1 }} id="forai">
+      <div className="lg:col-span-2 card p-6" style={{ backgroundColor: "#efeae6", zIndex: 0 }} id="forai">
         <h1 className="text-4xl font-bold mb-4">
           {lessonTitle ? `Exercise for ${lessonTitle}` : "Loading lesson..."}
         </h1>
