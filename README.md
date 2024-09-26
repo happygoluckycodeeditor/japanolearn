@@ -1,50 +1,21 @@
-# React + TypeScript + Vite
+# Japanolearn
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Japanolearn is an AI-powered platform for learning Japanese. It combines interactive lessons, exercises, a dictionary search feature, and AI-generated content to help users improve their Japanese language skills.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Interactive Lessons**: Users can watch lesson videos, track their progress, and take quizzes.
+- **Dictionary Search**: Search for words using Kanji, Hiragana, or Romanized input, powered by Algolia.
+- **AI-Assisted Learning**: Provides explanations, example sentences, and additional content using Google Cloud Vertex AI (Gemini model).
+- **Exercises and Quizzes**: Test your understanding with multiple-choice questions (MCQs) for each lesson.
+- **Progress Tracking**: Track lesson completion using a radial progress bar and time spent on lessons.
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
-
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
-
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+- **Frontend**: React (Vite)
+- **Backend**: Firebase (Firestore, Authentication, Hosting)
+- **Search**: Algolia
+- **AI**: Google Cloud Vertex AI (Gemini model)
+- **CSS Framework**: Tailwind CSS, DaisyUI
+- **Version Control**: GitHub
+- **CI/CD**: GitHub Actions with Firebase deployment
